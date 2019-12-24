@@ -1,23 +1,30 @@
 package main
 
-// Fwd digester
-type fwd struct {
-	run func() bool
+type runner interface {
+	run() bool
 }
 
-func forever() bool {
+type flag struct {
+}
+
+func (o *flag) run() bool {
 	return true
+}
+
+// Fwd digester
+type fwd struct {
+	runner runner
 }
 
 // Config configures digester
 func (o *fwd) Config(cfg string) error {
-	o.run = forever
+	o.runner = &flag{}
 	return nil
 }
 
 // Digest reads from src channel and forwards to dst channel
 func (o *fwd) Digest(src <-chan []byte, dst chan<- []byte) error {
-	for o.run() {
+	for o.runner.run() == true {
 		line := <-src
 		dst <- line
 	}
