@@ -21,6 +21,7 @@ func (o *boolbridgetest) value() bool {
 	if o.count == 0 {
 		o.val = false
 	}
+	o.count = o.count + 1
 	return val
 }
 
