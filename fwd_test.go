@@ -4,22 +4,22 @@ import (
 	"testing"
 )
 
-type flagtst struct {
+type booladapttst struct {
 	count int
-	flag  bool
+	val   bool
 }
 
-func newflagtst() *flagtst {
-	f := new(flagtst)
+func newbooladapttst() *booladapttst {
+	f := new(booladapttst)
 	f.count = 0
-	f.flag = true
+	f.val = true
 	return f
 }
 
-func (o *flagtst) run() bool {
-	val := o.flag
+func (o *booladapttst) value() bool {
+	val := o.val
 	if o.count == 0 {
-		o.flag = false
+		o.val = false
 	}
 	return val
 }
@@ -30,7 +30,7 @@ func TestConfig(t *testing.T) {
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
-	if f.runner.run() == false {
+	if f.keepRunning.value() == false {
 		t.Errorf("expecting true but got false")
 	}
 }
@@ -41,7 +41,7 @@ func TestDigest(t *testing.T) {
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
-	f.runner = newflagtst()
+	f.keepRunning = newbooladapttst()
 	src := make(chan []byte, 1)
 	expected := []byte("hello")
 	src <- expected

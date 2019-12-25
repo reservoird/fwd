@@ -1,30 +1,30 @@
 package main
 
-type runner interface {
-	run() bool
+type ibooladapt interface {
+	value() bool
 }
 
-type flag struct {
+type booladapt struct {
 }
 
-func (o *flag) run() bool {
+func (o *booladapt) value() bool {
 	return true
 }
 
 // Fwd digester
 type fwd struct {
-	runner runner
+	keepRunning ibooladapt
 }
 
 // Config configures digester
 func (o *fwd) Config(cfg string) error {
-	o.runner = &flag{}
+	o.keepRunning = &booladapt{}
 	return nil
 }
 
 // Digest reads from src channel and forwards to dst channel
 func (o *fwd) Digest(src <-chan []byte, dst chan<- []byte) error {
-	for o.runner.run() == true {
+	for o.keepRunning.value() == true {
 		line := <-src
 		dst <- line
 	}
