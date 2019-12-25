@@ -1,29 +1,12 @@
 package main
 
+//go:generate mockgen -source fwd.go -package main -destination fwd_mocks.go
+
 import (
 	"testing"
+
+	"github.com/golang/mock/gomock"
 )
-
-type boolbridgetest struct {
-	count int
-	val   bool
-}
-
-func newboolbridgetest() *boolbridgetest {
-	b := new(boolbridgetest)
-	b.count = 0
-	b.val = true
-	return b
-}
-
-func (o *boolbridgetest) value() bool {
-	val := o.val
-	if o.count == 0 {
-		o.val = false
-	}
-	o.count = o.count + 1
-	return val
-}
 
 func TestConfig(t *testing.T) {
 	f := fwd{}
@@ -37,12 +20,28 @@ func TestConfig(t *testing.T) {
 }
 
 func TestDigest(t *testing.T) {
+	mockControl := gomock.NewController(t)
+	defer mockControl.Finish()
+
+	iboolmock := NewMockibool(mockControl)
+	itr := 0
+	itrTotal := 1
+	iboolmock.EXPECT().value().DoAndReturn(
+		func() bool {
+			if itr == itrTotal {
+				return false
+			}
+			itr = itr + 1
+			return true
+		},
+	).Times(2)
+
 	f := fwd{}
 	err := f.Config("")
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
-	f.keepRunning = newboolbridgetest()
+	f.keepRunning = iboolmock
 	src := make(chan []byte, 2)
 	expected := []byte("hello")
 	src <- expected
