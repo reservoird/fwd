@@ -10,10 +10,10 @@ type booladapttst struct {
 }
 
 func newbooladapttst() *booladapttst {
-	f := new(booladapttst)
-	f.count = 0
-	f.val = true
-	return f
+	b := new(booladapttst)
+	b.count = 0
+	b.val = true
+	return b
 }
 
 func (o *booladapttst) value() bool {
