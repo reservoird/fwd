@@ -1,19 +1,19 @@
 package main
 
-type ibool interface {
-	value() bool
-}
+import (
+	"github.com/reservoird/ibool"
+)
 
 type boolbridge struct {
 }
 
-func (o *boolbridge) value() bool {
+func (o *boolbridge) Val() bool {
 	return true
 }
 
 // Fwd digester
 type fwd struct {
-	keepRunning ibool
+	keepRunning ibool.IBool
 }
 
 // Config configures digester
@@ -24,7 +24,7 @@ func (o *fwd) Config(cfg string) error {
 
 // Digest reads from src channel and forwards to dst channel
 func (o *fwd) Digest(src <-chan []byte, dst chan<- []byte) error {
-	for o.keepRunning.value() == true {
+	for o.keepRunning.Val() == true {
 		line := <-src
 		dst <- line
 	}

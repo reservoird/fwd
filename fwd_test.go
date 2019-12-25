@@ -1,11 +1,13 @@
 package main
 
-//go:generate mockgen -source fwd.go -package main -destination fwd_mocks.go
+//go:generate mkdir -p mocks/iboolmocks
+//go:generate mockgen -source $GOPATH/pkg/mod/github.com/reservoird/ibool@v1.0.0/ibool.go -package iboolmocks -destination mocks/iboolmocks/ibool_mock.go
 
 import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/reservoird/fwd/mocks/iboolmocks"
 )
 
 func TestConfig(t *testing.T) {
@@ -14,7 +16,7 @@ func TestConfig(t *testing.T) {
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
-	if f.keepRunning.value() == false {
+	if f.keepRunning.Val() == false {
 		t.Errorf("expecting true but got false")
 	}
 }
@@ -23,10 +25,10 @@ func TestDigest(t *testing.T) {
 	mockControl := gomock.NewController(t)
 	defer mockControl.Finish()
 
-	iboolmock := NewMockibool(mockControl)
+	bmock := iboolmocks.NewMockIBool(mockControl)
 	itr := 0
 	itrTotal := 1
-	iboolmock.EXPECT().value().DoAndReturn(
+	bmock.EXPECT().Val().DoAndReturn(
 		func() bool {
 			if itr == itrTotal {
 				return false
@@ -41,7 +43,7 @@ func TestDigest(t *testing.T) {
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
-	f.keepRunning = iboolmock
+	f.keepRunning = bmock
 	src := make(chan []byte, 2)
 	expected := []byte("hello")
 	src <- expected
