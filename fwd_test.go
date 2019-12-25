@@ -43,10 +43,10 @@ func TestDigest(t *testing.T) {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
 	f.keepRunning = newboolbridgetest()
-	src := make(chan []byte, 1)
+	src := make(chan []byte, 2)
 	expected := []byte("hello")
 	src <- expected
-	dst := make(chan []byte, 1)
+	dst := make(chan []byte, 2)
 	err = f.Digest(src, dst)
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
