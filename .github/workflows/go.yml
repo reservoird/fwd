@@ -22,6 +22,7 @@ jobs:
     - name: Generate
       run: |
         go install github.com/golang/mock/mockgen
+        env
         go generate
 
     - name: Test
