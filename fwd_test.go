@@ -4,19 +4,19 @@ import (
 	"testing"
 )
 
-type booladapttst struct {
+type boolbridgetest struct {
 	count int
 	val   bool
 }
 
-func newbooladapttst() *booladapttst {
-	b := new(booladapttst)
+func newboolbridgetest() *boolbridgetest {
+	b := new(boolbridgetest)
 	b.count = 0
 	b.val = true
 	return b
 }
 
-func (o *booladapttst) value() bool {
+func (o *boolbridgetest) value() bool {
 	val := o.val
 	if o.count == 0 {
 		o.val = false
@@ -41,7 +41,7 @@ func TestDigest(t *testing.T) {
 	if err != nil {
 		t.Errorf("expecting nil but got error: %v", err)
 	}
-	f.keepRunning = newbooladapttst()
+	f.keepRunning = newboolbridgetest()
 	src := make(chan []byte, 1)
 	expected := []byte("hello")
 	src <- expected

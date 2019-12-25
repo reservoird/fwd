@@ -1,24 +1,24 @@
 package main
 
-type ibooladapt interface {
+type ibool interface {
 	value() bool
 }
 
-type booladapt struct {
+type boolbridge struct {
 }
 
-func (o *booladapt) value() bool {
+func (o *boolbridge) value() bool {
 	return true
 }
 
 // Fwd digester
 type fwd struct {
-	keepRunning ibooladapt
+	keepRunning ibool
 }
 
 // Config configures digester
 func (o *fwd) Config(cfg string) error {
-	o.keepRunning = &booladapt{}
+	o.keepRunning = &boolbridge{}
 	return nil
 }
 
