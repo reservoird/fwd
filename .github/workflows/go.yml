@@ -22,7 +22,11 @@ jobs:
     - name: Generate
       run: |
         go get github.com/golang/mock/mockgen
+        echo $PATH
         export PATH=$PATH:$GOPATH/bin
+        echo $PATH
+        ls /usr/local/bin
+        ls /usr/bin
         go generate
 
     - name: Test
