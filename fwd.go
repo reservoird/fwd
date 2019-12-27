@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 
-	"github.com/reservoird/reservoird/run"
+	"github.com/reservoird/icd"
 )
 
 type fwd struct {
@@ -16,7 +16,7 @@ func (o *fwd) Config(cfg string) error {
 }
 
 // Digest reads from in queue and forwards to out queue
-func (o *fwd) Digest(iq run.Queue, oq run.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
+func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
 	for o.run == true {
 		d, err := iq.Pop()
 		if err != nil {
