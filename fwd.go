@@ -10,6 +10,11 @@ type fwd struct {
 	run bool
 }
 
+// NewDigester is what reservoird to create and start fwd
+func NewDigester() (icd.Digester, error) {
+	return new(fwd), nil
+}
+
 // Config configures digester
 func (o *fwd) Config(cfg string) error {
 	return nil
@@ -36,6 +41,3 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 	}
 	return nil
 }
-
-// Digester for fwd
-var Digester fwd
