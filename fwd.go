@@ -53,7 +53,7 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		}
 		line := string(data)
 		if o.Timestamp == true {
-			line = fmt.Sprintf("%s %s:", o.Name, time.Now().Format(time.RFC3339)) + line
+			line = fmt.Sprintf("%s %s: ", o.Name, time.Now().Format(time.RFC3339)) + line
 		}
 		err = oq.Push([]byte(line))
 		if err != nil {
