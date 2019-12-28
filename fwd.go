@@ -24,17 +24,21 @@ func NewDigester() (icd.Digester, error) {
 
 // Config configures digester
 func (o *fwd) Config(cfg string) error {
-	d, err := ioutil.ReadFile(cfg)
-	if err != nil {
-		return err
+	o.Tag = "fwd"
+	o.Timestamp = false
+	if cfg != "" {
+		d, err := ioutil.ReadFile(cfg)
+		if err != nil {
+			return err
+		}
+		f := fwd{}
+		err = json.Unmarshal(d, &f)
+		if err != nil {
+			return err
+		}
+		o.Tag = f.Tag
+		o.Timestamp = f.Timestamp
 	}
-	f := fwd{}
-	err = json.Unmarshal(d, &f)
-	if err != nil {
-		return err
-	}
-	o.Tag = f.Tag
-	o.Timestamp = f.Timestamp
 	return nil
 }
 
