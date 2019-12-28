@@ -41,7 +41,7 @@ func (o *fwd) Config(cfg string) error {
 // Name returns the digester name
 func (o *fwd) Name() string {
 	if o.Tag == "" {
-		return fmt.Sprintf(reflect.TypeOf(o).String())
+		return fmt.Sprintf(reflect.TypeOf(*o).String())
 	}
 	return o.Tag
 }
