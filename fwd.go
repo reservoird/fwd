@@ -77,7 +77,7 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		case <-done:
 			o.run = false
 		default:
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond)
 		}
 	}
 	return nil
