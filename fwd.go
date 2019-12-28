@@ -54,25 +54,30 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 	for o.run == true {
 		d, err := iq.Get()
 		if err != nil {
-			return err
-		}
-		data, ok := d.([]byte)
-		if ok == false {
-			return fmt.Errorf("error invalid type")
-		}
-		line := string(data)
-		if o.Timestamp == true {
-			line = fmt.Sprintf("[%s %s] ", o.Name(), time.Now().Format(time.RFC3339)) + line
-		}
-		err = oq.Put([]byte(line))
-		if err != nil {
-			return err
+			fmt.Printf("%v\n", err)
+		} else {
+			if d != nil {
+				data, ok := d.([]byte)
+				if ok == false {
+					fmt.Printf("error invalid type\n")
+				} else {
+					line := string(data)
+					if o.Timestamp == true {
+						line = fmt.Sprintf("[%s %s] ", o.Name(), time.Now().Format(time.RFC3339)) + line
+					}
+					err = oq.Put([]byte(line))
+					if err != nil {
+						fmt.Printf("%v\n", err)
+					}
+				}
+			}
 		}
 
 		select {
 		case <-done:
 			o.run = false
 		default:
+			time.Sleep(time.Second)
 		}
 	}
 	return nil
