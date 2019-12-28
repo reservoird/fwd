@@ -56,7 +56,7 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 
 	o.run = true
 	for o.run == true {
-		d, err := iq.Pop()
+		d, err := iq.Get()
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		if o.Timestamp == true {
 			line = fmt.Sprintf("[%s %s] ", o.Name(), time.Now().Format(time.RFC3339)) + line
 		}
-		err = oq.Push([]byte(line))
+		err = oq.Put([]byte(line))
 		if err != nil {
 			return err
 		}
