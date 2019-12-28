@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"sync"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 type fwd struct {
 	run       bool
-	Name      string
+	Tag       string
 	Timestamp bool
 }
 
@@ -32,9 +33,17 @@ func (o *fwd) Config(cfg string) error {
 	if err != nil {
 		return err
 	}
-	o.Name = f.Name
+	o.Tag = f.Tag
 	o.Timestamp = f.Timestamp
 	return nil
+}
+
+// Name returns the digester name
+func (o *fwd) Name() string {
+	if o.Tag == "" {
+		return fmt.Sprintf(reflect.TypeOf(o).String())
+	}
+	return o.Tag
 }
 
 // Digest reads from in queue and forwards to out queue
@@ -53,7 +62,7 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		}
 		line := string(data)
 		if o.Timestamp == true {
-			line = fmt.Sprintf("[%s %s] ", o.Name, time.Now().Format(time.RFC3339)) + line
+			line = fmt.Sprintf("[%s %s] ", o.Name(), time.Now().Format(time.RFC3339)) + line
 		}
 		err = oq.Push([]byte(line))
 		if err != nil {
