@@ -16,29 +16,23 @@ type fwd struct {
 	Timestamp bool
 }
 
-// NewDigester is what reservoird to create and start fwd
-func NewDigester() (icd.Digester, error) {
-	return new(fwd), nil
-}
-
-// Config configures digester
-func (o *fwd) Config(cfg string) error {
-	o.Tag = "fwd"
-	o.Timestamp = false
+// New is what reservoird to create and start fwd
+func New(cfg string) (icd.Digester, error) {
+	o := &fwd{
+		Tag:       "fwd",
+		Timestamp: false,
+	}
 	if cfg != "" {
 		d, err := ioutil.ReadFile(cfg)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		f := fwd{}
-		err = json.Unmarshal(d, &f)
+		err = json.Unmarshal(d, o)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		o.Tag = f.Tag
-		o.Timestamp = f.Timestamp
 	}
-	return nil
+	return o, nil
 }
 
 // Name returns the digester name
