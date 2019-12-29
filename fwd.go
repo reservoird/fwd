@@ -11,14 +11,17 @@ import (
 )
 
 type fwd struct {
+	stats     chan<- string
 	run       bool
 	Tag       string
 	Timestamp bool
 }
 
 // New is what reservoird to create and start fwd
-func New(cfg string) (icd.Digester, error) {
+func New(cfg string, stats chan<- string) (icd.Digester, error) {
 	o := &fwd{
+		stats:     stats,
+		run:       true,
 		Tag:       "fwd",
 		Timestamp: false,
 	}
