@@ -10,27 +10,30 @@ import (
 	"github.com/reservoird/icd"
 )
 
-type fwdCfg struct {
+// FwdCfg contains fwd config
+type FwdCfg struct {
 	Name      string
 	Timestamp bool
 }
 
-type fwdStats struct {
-	MsgsRead uint64
-	MsgsDrop uint64
-	MsgsSent uint64
-	Active   bool
+// FwdStats contains fwd stats
+type FwdStats struct {
+	MessagesReceived uint64
+	MessagesSent     uint64
+	Running          bool
 }
 
-type fwd struct {
-	cfg       fwdCfg
-	stats     fwdStats
-	statsChan chan<- string
+// Fwd contains what is needed to run digester
+type Fwd struct {
+	cfg       FwdCfg
+	run       bool
+	statsChan chan FwdStats
+	clearChan chan struct{}
 }
 
 // New is what reservoird to create and start fwd
-func New(cfg string, statsChan chan<- string) (icd.Digester, error) {
-	c := fwdCfg{
+func New(cfg string) (icd.Digester, error) {
+	c := FwdCfg{
 		Name:      "com.reservoird.digest.fwd",
 		Timestamp: false,
 	}
@@ -44,25 +47,50 @@ func New(cfg string, statsChan chan<- string) (icd.Digester, error) {
 			return nil, err
 		}
 	}
-	o := &fwd{
+	o := &Fwd{
 		cfg:       c,
-		stats:     fwdStats{},
-		statsChan: statsChan,
+		run:       true,
+		statsChan: make(chan FwdStats),
+		clearChan: make(chan struct{}),
 	}
 	return o, nil
 }
 
 // Name returns the digester name
-func (o *fwd) Name() string {
+func (o *Fwd) Name() string {
 	return o.cfg.Name
 }
 
+// Stats returns stats NOTE: thread safe
+func (o *Fwd) Stats() (string, error) {
+	select {
+	case stats := <-o.statsChan:
+		data, err := json.Marshal(stats)
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	default:
+	}
+	return "", nil
+}
+
+// ClearStats clears stats NOTE: thread safe
+func (o *Fwd) ClearStats() {
+	select {
+	case o.clearChan <- struct{}{}:
+	default:
+	}
+}
+
 // Digest reads from in queue and forwards to out queue
-func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
+func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	o.stats.Active = true
-	for o.stats.Active == true {
+	stats := FwdStats{}
+
+	o.run = true
+	for o.run == true {
 		if iq.Closed() == false {
 			d, err := iq.Get()
 			if err != nil {
@@ -72,9 +100,8 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 					data, ok := d.([]byte)
 					if ok == false {
 						fmt.Printf("error invalid type\n")
-						o.stats.MsgsDrop = o.stats.MsgsDrop + 1
 					} else {
-						o.stats.MsgsRead = o.stats.MsgsRead + 1
+						stats.MessagesReceived = stats.MessagesReceived + 1
 						if oq.Closed() == false {
 							line := string(data)
 							if o.cfg.Timestamp == true {
@@ -83,30 +110,30 @@ func (o *fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 							err = oq.Put([]byte(line))
 							if err != nil {
 								fmt.Printf("%v\n", err)
-								o.stats.MsgsDrop = o.stats.MsgsDrop + 1
 							} else {
-								o.stats.MsgsSent = o.stats.MsgsSent + 1
+								stats.MessagesSent = stats.MessagesSent + 1
 							}
 						}
 					}
-				} else {
-					o.stats.MsgsDrop = o.stats.MsgsDrop + 1
 				}
 			}
 		}
 
 		select {
-		case <-done:
-			o.stats.Active = false
+		case <-o.clearChan:
+			stats = FwdStats{}
 		default:
 		}
 
-		stats, err := json.Marshal(o.stats)
-		if err != nil {
-			fmt.Printf("%v\n", err)
-		}
 		select {
-		case o.statsChan <- string(stats):
+		case <-done:
+			o.run = false
+		default:
+		}
+
+		stats.Running = o.run
+		select {
+		case o.statsChan <- stats:
 		default:
 		}
 
