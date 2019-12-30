@@ -31,7 +31,7 @@ type fwd struct {
 // New is what reservoird to create and start fwd
 func New(cfg string, statsChan chan<- string) (icd.Digester, error) {
 	c := fwdCfg{
-		Name:      "fwd",
+		Name:      "com.reservoird.digest.fwd",
 		Timestamp: false,
 	}
 	if cfg != "" {
