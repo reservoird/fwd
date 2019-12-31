@@ -21,14 +21,14 @@ type FwdStats struct {
 	MessagesReceived uint64
 	MessagesSent     uint64
 	Running          bool
+	Monitoring       bool
 }
 
 // Fwd contains what is needed to run digester
 type Fwd struct {
 	cfg       FwdCfg
-	run       bool
-	stats     FwdStats
-	statsLock sync.Mutex
+	statsChan chan FwdStats
+	clearChan chan struct{}
 }
 
 // New is what reservoird to create and start fwd
@@ -49,9 +49,8 @@ func New(cfg string) (icd.Digester, error) {
 	}
 	o := &Fwd{
 		cfg:       c,
-		run:       true,
-		stats:     FwdStats{},
-		statsLock: sync.Mutex{},
+		statsChan: make(chan FwdStats),
+		clearChan: make(chan struct{}),
 	}
 	return o, nil
 }
@@ -61,49 +60,61 @@ func (o *Fwd) Name() string {
 	return o.cfg.Name
 }
 
-// Stats returns stats NOTE: thread safe
-func (o *Fwd) Stats() (string, error) {
-	o.statsLock.Lock()
-	defer o.statsLock.Unlock()
-	data, err := json.Marshal(o.stats)
-	if err != nil {
-		return "", err
+// Monitor provides stats and clear
+func (o *Fwd) Monitor(statsChan chan<- string, clearChan <-chan struct{}, doneChan <-chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done() // required
+
+	stats := FwdStats{}
+	monrun := true
+	for monrun == true {
+		// clear
+		select {
+		case <-clearChan:
+			select {
+			case o.clearChan <- struct{}{}:
+			default:
+			}
+		}
+
+		// done
+		select {
+		case <-doneChan:
+			monrun = false
+			stats.Monitoring = monrun
+		}
+
+		// get stats from digest
+		select {
+		case stats = <-o.statsChan:
+			stats.Monitoring = monrun
+		default:
+		}
+
+		// marshal
+		data, err := json.Marshal(stats)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+		} else {
+			// send stats to reservoird
+			select {
+			case statsChan <- string(data):
+			default:
+			}
+		}
+
+		time.Sleep(time.Second)
 	}
-	return string(data), nil
-}
-
-// ClearStats clears stats NOTE: thread safe
-func (o *Fwd) ClearStats() {
-	o.statsLock.Lock()
-	defer o.statsLock.Unlock()
-	o.stats = FwdStats{}
-}
-
-func (o *Fwd) incMessagesReceived() {
-	o.statsLock.Lock()
-	defer o.statsLock.Unlock()
-	o.stats.MessagesReceived = o.stats.MessagesReceived + 1
-}
-
-func (o *Fwd) incMessagesSent() {
-	o.statsLock.Lock()
-	defer o.statsLock.Unlock()
-	o.stats.MessagesSent = o.stats.MessagesSent + 1
-}
-
-func (o *Fwd) setRunning(run bool) {
-	o.statsLock.Lock()
-	defer o.statsLock.Unlock()
-	o.stats.Running = run
 }
 
 // Digest reads from in queue and forwards to out queue
 func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	o.run = true
-	o.setRunning(o.run)
-	for o.run == true {
+	stats := FwdStats{}
+
+	run := true
+	stats.Running = run
+	for run == true {
 		if iq.Closed() == false {
 			d, err := iq.Get()
 			if err != nil {
@@ -114,7 +125,7 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 					if ok == false {
 						fmt.Printf("error invalid type\n")
 					} else {
-						o.incMessagesReceived()
+						stats.MessagesReceived = stats.MessagesReceived + 1
 						if oq.Closed() == false {
 							line := string(data)
 							if o.cfg.Timestamp == true {
@@ -124,7 +135,7 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 							if err != nil {
 								fmt.Printf("%v\n", err)
 							} else {
-								o.incMessagesSent()
+								stats.MessagesSent = stats.MessagesSent + 1
 							}
 						}
 					}
@@ -132,10 +143,24 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 			}
 		}
 
+		// clear
+		select {
+		case <-o.clearChan:
+			stats = FwdStats{}
+		default:
+		}
+
+		// listens for shutdown
 		select {
 		case <-done:
-			o.run = false
-			o.setRunning(o.run)
+			run = false
+			stats.Running = run
+		default:
+		}
+
+		// send to monitor
+		select {
+		case o.statsChan <- stats:
 		default:
 		}
 
