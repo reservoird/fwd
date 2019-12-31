@@ -105,7 +105,7 @@ func (o *Fwd) Monitor(statsChan chan<- string, clearChan <-chan struct{}, doneCh
 		}
 
 		if monrun == true {
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond)
 		}
 	}
 }
