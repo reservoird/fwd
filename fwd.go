@@ -62,7 +62,6 @@ func (o *Fwd) Name() string {
 
 // Monitor provides stats and clear
 func (o *Fwd) Monitor(statsChan chan<- string, clearChan <-chan struct{}, doneChan <-chan struct{}, wg *sync.WaitGroup) {
-	fmt.Printf("into %s.Monitor\n", o.cfg.Name)
 	defer wg.Done() // required
 
 	stats := FwdStats{}
@@ -107,12 +106,10 @@ func (o *Fwd) Monitor(statsChan chan<- string, clearChan <-chan struct{}, doneCh
 
 		time.Sleep(time.Second)
 	}
-	fmt.Printf("outof %s.Monitor\n", o.cfg.Name)
 }
 
 // Digest reads from in queue and forwards to out queue
 func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
-	fmt.Printf("into %s.Digest\n", o.cfg.Name)
 	defer wg.Done()
 
 	stats := FwdStats{}
@@ -171,6 +168,5 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 
 		time.Sleep(time.Millisecond)
 	}
-	fmt.Printf("outof %s.Digest\n", o.cfg.Name)
 	return nil
 }
