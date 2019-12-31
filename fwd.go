@@ -49,8 +49,8 @@ func New(cfg string) (icd.Digester, error) {
 	}
 	o := &Fwd{
 		cfg:       c,
-		statsChan: make(chan FwdStats),
-		clearChan: make(chan struct{}),
+		statsChan: make(chan FwdStats, 1),
+		clearChan: make(chan struct{}, 1),
 	}
 	return o, nil
 }
