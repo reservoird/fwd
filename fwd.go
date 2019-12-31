@@ -18,6 +18,7 @@ type FwdCfg struct {
 
 // FwdStats contains fwd stats
 type FwdStats struct {
+	Name             string
 	MessagesReceived uint64
 	MessagesSent     uint64
 	Running          bool
@@ -117,6 +118,7 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 	stats := FwdStats{}
 
 	run := true
+	stats.Name = o.cfg.Name
 	stats.Running = run
 	for run == true {
 		if iq.Closed() == false {
@@ -158,6 +160,7 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		select {
 		case <-done:
 			run = false
+			stats.Name = o.cfg.Name
 			stats.Running = run
 		default:
 		}
