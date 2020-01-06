@@ -28,6 +28,7 @@ type FwdStats struct {
 // Fwd contains what is needed to run digester
 type Fwd struct {
 	cfg       FwdCfg
+	run       bool
 	statsChan chan FwdStats
 	clearChan chan struct{}
 }
@@ -50,6 +51,7 @@ func New(cfg string) (icd.Digester, error) {
 	}
 	o := &Fwd{
 		cfg:       c,
+		run:       false,
 		statsChan: make(chan FwdStats, 1),
 		clearChan: make(chan struct{}, 1),
 	}
@@ -111,16 +113,21 @@ func (o *Fwd) Monitor(statsChan chan<- string, clearChan <-chan struct{}, doneCh
 	}
 }
 
+// Running returns whether or not digest is running
+func (o *Fwd) Running() bool {
+	return o.run
+}
+
 // Digest reads from in queue and forwards to out queue
 func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	stats := FwdStats{}
 
-	run := true
+	o.run = true
 	stats.Name = o.cfg.Name
-	stats.Running = run
-	for run == true {
+	stats.Running = o.run
+	for o.run == true {
 		if iq.Closed() == false {
 			d, err := iq.Get()
 			if err != nil {
@@ -159,9 +166,9 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		// listens for shutdown
 		select {
 		case <-done:
-			run = false
+			o.run = false
 			stats.Name = o.cfg.Name
-			stats.Running = run
+			stats.Running = o.run
 		default:
 		}
 
@@ -171,7 +178,7 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		default:
 		}
 
-		if run == true {
+		if o.run == true {
 			time.Sleep(time.Millisecond)
 		}
 	}
