@@ -159,7 +159,16 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		// clear
 		select {
 		case <-o.clearChan:
-			stats = FwdStats{}
+			stats = FwdStats{
+				Name:    o.cfg.Name,
+				Running: o.run,
+			}
+		default:
+		}
+
+		// send to monitor
+		select {
+		case o.statsChan <- stats:
 		default:
 		}
 
@@ -167,14 +176,9 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 		select {
 		case <-done:
 			o.run = false
-			stats.Name = o.cfg.Name
 			stats.Running = o.run
-		default:
-		}
-
-		// send to monitor
-		select {
-		case o.statsChan <- stats:
+			// send final stats blocking
+			o.statsChan <- stats
 		default:
 		}
 
