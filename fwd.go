@@ -119,7 +119,7 @@ func (o *Fwd) Running() bool {
 }
 
 // Digest reads from in queue and forwards to out queue
-func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) error {
+func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	stats := FwdStats{}
@@ -186,5 +186,4 @@ func (o *Fwd) Digest(iq icd.Queue, oq icd.Queue, done <-chan struct{}, wg *sync.
 			time.Sleep(time.Millisecond)
 		}
 	}
-	return nil
 }
