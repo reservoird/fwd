@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"runtime"
 	"time"
 
 	"github.com/reservoird/icd"
@@ -124,9 +125,7 @@ func (o *Fwd) Digest(rcv icd.Queue, snd icd.Queue, mc *icd.MonitorControl) {
 		default:
 		}
 
-		if o.run == true {
-			time.Sleep(time.Millisecond)
-		}
+		runtime.Gosched()
 	}
 
 	// send final stats blocking
