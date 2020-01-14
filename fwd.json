@@ -1,4 +1,5 @@
 {
   "name": "fwd",
+  "sleepDuration": "1s",
   "timestamp": true
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"runtime"
 	"time"
 
 	"github.com/reservoird/icd"
@@ -12,8 +11,9 @@ import (
 
 // FwdCfg contains fwd config
 type FwdCfg struct {
-	Name      string
-	Timestamp bool
+	Name          string
+	SleepDuration string
+	Timestamp     bool
 }
 
 // FwdStats contains fwd stats
@@ -26,15 +26,17 @@ type FwdStats struct {
 
 // Fwd contains what is needed to run digester
 type Fwd struct {
-	cfg FwdCfg
-	run bool
+	cfg   FwdCfg
+	sleep time.Duration
+	run   bool
 }
 
 // New is what reservoird to create and start fwd
 func New(cfg string) (icd.Digester, error) {
 	c := FwdCfg{
-		Name:      "com.reservoird.digest.fwd",
-		Timestamp: false,
+		Name:          "com.reservoird.digest.fwd",
+		SleepDuration: "1s",
+		Timestamp:     false,
 	}
 	if cfg != "" {
 		d, err := ioutil.ReadFile(cfg)
@@ -46,9 +48,14 @@ func New(cfg string) (icd.Digester, error) {
 			return nil, err
 		}
 	}
+	sleep, err := time.ParseDuration(c.SleepDuration)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing duration")
+	}
 	o := &Fwd{
-		cfg: c,
-		run: false,
+		cfg:   c,
+		sleep: sleep,
+		run:   false,
 	}
 	return o, nil
 }
@@ -122,10 +129,9 @@ func (o *Fwd) Digest(rcv icd.Queue, snd icd.Queue, mc *icd.MonitorControl) {
 		case <-mc.DoneChan:
 			o.run = false
 			stats.Running = o.run
-		default:
+		case <-time.After(o.sleep):
 		}
 
-		runtime.Gosched()
 	}
 
 	// send final stats blocking
