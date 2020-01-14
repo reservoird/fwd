@@ -21,7 +21,6 @@ type FwdStats struct {
 	MessagesReceived uint64
 	MessagesSent     uint64
 	Running          bool
-	Monitoring       bool
 }
 
 // Fwd contains what is needed to run digester
@@ -133,6 +132,6 @@ func (o *Fwd) Digest(rcv icd.Queue, snd icd.Queue, mc *icd.MonitorControl) {
 	// send final stats
 	select {
 	case mc.StatsChan <- stats:
-	default:
+	case <-time.After(time.Second):
 	}
 }
