@@ -130,5 +130,5 @@ func (o *Fwd) Digest(rcv icd.Queue, snd icd.Queue, mc *icd.MonitorControl) {
 	}
 
 	// send final stats blocking
-	mc.StatsChan <- stats
+	mc.FinalStatsChan <- stats
 }
